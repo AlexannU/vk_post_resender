@@ -1,18 +1,21 @@
 import { API, Upload, Updates, getRandomId, WallAttachment, MessageContext } from 'vk-io'
-import { readConfigFromLocalStorage, writeConfigInLocalStorage, createStorageFile } from './models/LocalStorage.js';
+import { LocalStorage } from './models/LocalStorage.js';
 import { config } from 'dotenv'
 import { DistributeMode } from './utils/types.js'
+import path from 'path'
+
+let mode  = DistributeMode.PROD
+const localStorage = new LocalStorage()
 
 config({ path: ".env"})
 
-let mode  = DistributeMode.PROD
-
 let pathLableIndex = process.argv.indexOf("--path")
 if (process.argv.indexOf("--path") >= 0) {
-    let envPath = process.argv.at(pathLableIndex + 1)
-    if (envPath) {
-        config( {path: envPath, override: true} )
-        console.log(`Set .env from ${envPath}`);
+    let storagePath = process.argv.at(pathLableIndex + 1)
+    if (storagePath) {
+        config( {path: path.join(storagePath, ".env"), override: true} )
+        localStorage.setPath(storagePath)
+        console.log(`Set .env from ${storagePath}`);
     }
 
 }
@@ -25,6 +28,8 @@ const vkToken = mode == DistributeMode.DEBUG ? process.env.GROUP_TOKEN_DEBUG : p
 const ownerId = process.env.OWNER_ID ?? ""
 const devId = process.env.DEV_ID ?? ""
 console.log(vkToken);
+console.log(ownerId);
+
 
 
 if(vkToken == undefined) throw Error("You must specify the required parameters in the .env")
@@ -60,7 +65,7 @@ updates.on("wall_post_new",(wallContext) => {
 
 updates.start()
     .then(() => {
-        createStorageFile()
+        localStorage.createStorageFile()
         console.log(`${Date()} Bot started`)
     })
     .catch(console.error);
@@ -101,13 +106,13 @@ function handleWallNewPost(wall: WallAttachment) {
 
 
 function readAndWritePeerIds(peerId: number) {
-    let localData = readConfigFromLocalStorage()
+    let localData = localStorage.readConfigFromLocalStorage()
     if (localData != null) {
         if (!localData.peerIds.includes(peerId)) {
             localData.peerIds.push(peerId)
             console.log(`${Date()} Peer id added: ${peerId}`)
         }
-        if (writeConfigInLocalStorage(localData)) {
+        if (localStorage.writeConfigInLocalStorage(localData)) {
             api.messages.send({
                 peer_id: peerId,
                 random_id: getRandomId(),
@@ -120,12 +125,12 @@ function readAndWritePeerIds(peerId: number) {
 
 function unSubcribePeerId(peerId: number) {
     console.log(`${Date()} Unsubscribe peerId ${peerId}`)
-    let localData = readConfigFromLocalStorage()
+    let localData = localStorage.readConfigFromLocalStorage()
     if (localData != null) {
         if (localData.peerIds.includes(peerId)) {
             let devetedId = localData.peerIds.indexOf(peerId)
             localData.peerIds.splice(devetedId, 1)
-            if (writeConfigInLocalStorage(localData)) {
+            if (localStorage.writeConfigInLocalStorage(localData)) {
                 api.messages.send({
                     peer_id: peerId,
                     random_id: getRandomId(),
@@ -137,7 +142,7 @@ function unSubcribePeerId(peerId: number) {
 }
 
 function onWallPostNew(wall: WallAttachment) {
-    let localData = readConfigFromLocalStorage()
+    let localData = localStorage.readConfigFromLocalStorage()
     if (localData != null) {
         if (!localData.sendedPosts.includes(wall.id)) {
             api.messages.send({
@@ -152,7 +157,7 @@ function onWallPostNew(wall: WallAttachment) {
 
 function writeSendedPost(postId:number) {
    
-    let localData = readConfigFromLocalStorage()
+    let localData = localStorage.readConfigFromLocalStorage()
     if (localData != null) {
         if (localData.sendedPosts.length > 100) {
             localData.sendedPosts.shift()
@@ -161,7 +166,7 @@ function writeSendedPost(postId:number) {
             localData.sendedPosts.push(postId)
             console.log(`${Date()} Add post ${postId} to local storage`)
         }
-        writeConfigInLocalStorage(localData)
+        localStorage.writeConfigInLocalStorage(localData)
     }
   }
 
