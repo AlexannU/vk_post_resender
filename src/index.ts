@@ -27,10 +27,6 @@ if (process.argv.indexOf("-d") >= 0) {
 const vkToken = mode == DistributeMode.DEBUG ? process.env.GROUP_TOKEN_DEBUG : process.env.GROUP_TOKEN_PROD
 const ownerId = process.env.OWNER_ID ?? ""
 const devId = process.env.DEV_ID ?? ""
-console.log(vkToken);
-console.log(ownerId);
-
-
 
 if(vkToken == undefined) throw Error("You must specify the required parameters in the .env")
 
