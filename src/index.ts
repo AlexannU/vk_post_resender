@@ -1,8 +1,11 @@
 import { API, Upload, Updates, getRandomId, WallAttachment, MessageContext } from 'vk-io'
 import { readConfigFromLocalStorage, writeConfigInLocalStorage, createStorageFile } from './models/LocalStorage.js';
-import { config } from "dotenv"
+import { config } from 'dotenv'
+import { DistributeMode } from './utils/types.js'
 
 config({ path: ".env"})
+
+let mode  = DistributeMode.PROD
 
 let pathLableIndex = process.argv.indexOf("--path")
 if (process.argv.indexOf("--path") >= 0) {
@@ -14,9 +17,14 @@ if (process.argv.indexOf("--path") >= 0) {
 
 }
 
-const vkToken = process.env.GROUP_TOKEN_DEBUG
+if (process.argv.indexOf("-d") >= 0) {
+    mode = DistributeMode.DEBUG
+}
+
+const vkToken = mode == DistributeMode.DEBUG ? process.env.GROUP_TOKEN_DEBUG : process.env.GROUP_TOKEN_PROD
 const ownerId = process.env.OWNER_ID ?? ""
 const devId = process.env.DEV_ID ?? ""
+console.log(vkToken);
 
 
 if(vkToken == undefined) throw Error("You must specify the required parameters in the .env")
