@@ -71,8 +71,10 @@ updates.start()
 function handleMessage(message: MessageContext) {
     if (message.text) {
         const command = message.text?.match(/\/(?<command>.+)/)?.groups?.command
+        console.log(message);
+        
         if (ownerId.length > 0 && devId.length > 0) {
-            if (message.peerId == Number(ownerId) || message.peerId == Number(devId)) {
+            if (message.senderId == Number(ownerId) || message.senderId == Number(devId)) {
                 if(command) handleCommand(command, message.peerId)
             }
         } else {
